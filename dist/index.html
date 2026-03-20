@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Tao of Tea — PO Aggregator</title>
+  <style>
+    /* 1. Global Reset */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ui-scale: 1.75;
+      --bg-main:    #FAF6F0;
+      --bg-header:  #3B2A1A;
+      --bg-card:    #FFFFFF;
+      --bg-table:   #FFFFFF;
+      --bg-row-alt: #F5EFE6;
+      --bg-entry:   #EDE5D8;
+      --fg-header:  #F5EFE6;
+      --fg-dark:    #2C1A0E;
+      --fg-mid:     #6B4C2A;
+      --fg-light:   #A08060;
+      --border:     #D4C4A8;
+      --gold:       #C8A96E;
+      --amz-accent: #8B4513;
+      --ih-accent:  #4A7C3F;
+      --toggle-active-bg:   #F5EFE6;
+      --toggle-active-fg:   #2C1A0E;
+      --toggle-inactive-bg: #5A3E28;
+      --toggle-inactive-fg: #B09070;
+    }
+    /* 2. Scale the entire UI naturally (1.1 = 110%, 1.2 = 120%) 
+       This is safer than the 'zoom' property for scrolling. */
+    html {
+      font-size: 125%; 
+    }
+
+    /* 3. Updated Body logic */
+    body {
+      font-family: Helvetica, Arial, sans-serif;
+      /* Using 0.85rem makes it start slightly smaller so that the 
+         115% html scale doesn't make it TOO huge. */
+      font-size: 0.85rem; 
+      background: var(--bg-main);
+      color: var(--fg-dark);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      /* Keeps the header/tabs fixed while the table scrolls below */
+      overflow: hidden; 
+    }
+      
+
+    /* ── Header ── */
+    header {
+      background: var(--bg-header);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    header h1 {
+      color: var(--fg-header);
+      font-family: Georgia, serif;
+      font-size: 0.95rem;
+      font-weight: bold;
+      letter-spacing: 0.3px;
+    }
+    .gold-line { height: 2px; background: var(--gold); flex-shrink: 0; }
+
+    /* ── Platform toggle ── */
+    .toggle-wrap { display: flex; align-items: center; gap: 8px; }
+    .toggle-wrap label { color: #B09070; font-size: 0.65rem; }
+    .toggle-btn {
+      padding: 6px 18px;
+      border: none;
+      border-radius: 3px;
+      font-size: 0.65rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      background: var(--toggle-inactive-bg);
+      color: var(--toggle-inactive-fg);
+    }
+    .toggle-btn.active {
+      background: var(--toggle-active-bg);
+      color: var(--toggle-active-fg);
+    }
+
+    /* ── Tabs ── */
+    .tab-bar {
+      display: flex;
+      background: var(--bg-header);
+      padding: 0 24px;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .tab-btn {
+      padding: 8px 20px;
+      background: #5A3E28;
+      color: #B09070;
+      border: none;
+      font-size: 0.65rem;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 4px 4px 0 0;
+      transition: background 0.15s, color 0.15s;
+    }
+    .tab-btn.active {
+      background: var(--bg-main);
+      color: var(--fg-dark);
+    }
+
+    /* ── Main content ── */
+    .tab-content { display: none; flex: 1; overflow: hidden; flex-direction: column; padding: 16px 24px; }
+    .tab-content.active { display: flex; }
+
+    /* ── File row ── */
+    .file-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .file-row label {
+      font-size: 0.75rem;
+      font-weight: bold;
+      color: var(--fg-dark);
+      min-width: 12rem;
+    }
+    .file-display {
+      flex: 1;
+      background: var(--bg-entry);
+      color: var(--fg-mid);
+      padding: 0.5rem 0.75rem;
+      font-size: 0.7rem;
+      border-radius: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border: 1px solid var(--border);
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.15s, , transform 0.1s;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn:hover { opacity: 0.88; }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-browse  { background: var(--bg-entry); color: var(--fg-dark); }
+    .btn-calc    { background: var(--amz-accent); color: white; }
+    .btn-save    { background: var(--gold); color: var(--fg-dark); }
+    .btn-gen     { background: var(--amz-accent); color: white; padding: 0.7rem 1.4rem; }
+    .btn-big     { background: #5A3E28; color: var(--fg-header); padding: 0.7rem 1.4rem; }
+
+    /* ── Status ── */
+    .status { font-size: 0.7rem; color: var(--fg-light); margin: 0.3rem 0 0.8rem; min-height: 1.1rem; }
+    .status.ok  { color: var(--ih-accent); }
+    .status.err { color: #9B3A3A; }
+
+    /* ── Cards ── */
+    .cards { display: flex; gap: 10px; margin-bottom: 12px; }
+    .card {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 10px 20px;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .card-label { font-size: 0.65rem; color: var(--fg-light); margin-bottom: 2px; }
+    .card-value { font-family: Georgia, serif; font-size: 0.8rem; font-weight: bold; color: var(--amz-accent); }
+
+    /* ── Table ── */
+    .table-wrap {
+      flex: 1;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      background-color: var(--bg-table); 
+      background-attachment: local;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    thead th {
+      background: #EDE0CC;
+      padding: 8px 10px;
+      text-align: left;
+      font-weight: bold;
+      position: sticky;
+      top: 0;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    thead th.num { text-align: right; }
+    tbody tr:nth-child(even) { background: var(--bg-row-alt); }
+    tbody tr:hover { background: #D6E8D0; }
+    tbody td { padding: 6px 10px; border-bottom: 1px solid #EEE; }
+    tbody td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+    /* ── Tab 2 specific ── */
+    .section-label {
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: var(--fg-mid);
+      margin-bottom: 4px;
+      margin-top: 8px;
+    }
+    .btn-row { display: flex; gap: 10px; margin-top: 16px; align-items: center; }
+    .mapping-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 8px 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+    .mapping-row .mapping-label { font-size: 0.8rem; font-weight: bold; color: var(--fg-dark); }
+    .mapping-name { font-size: 0.8rem; color: var(--fg-mid); flex: 1; }
+    .btn-change { background: var(--gold); color: var(--fg-dark); font-size: 0.75rem; padding: 5px 12px; }
+
+    /* ── Footer ── */
+    footer {
+      background: var(--bg-header);
+      /* Increased padding for a better "frame" look */
+      padding: 10px 24px; 
+      text-align: right;
+      /* Increased font size to be legible */
+      font-size: 0.85rem; 
+      /* Changed from the old dark brown to your 'gold' or 'fg-header' variable */
+      color: var(--gold); 
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+    }
+  </style>
+  <script type="module" crossorigin src="/assets/index-Dnnwew7K.js"></script>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <h1>🍵&nbsp; The Tao of Tea — AMZ / iHerb PO Aggregator &nbsp;&nbsp;&nbsp; v0.0.7</h1>
+  <div class="toggle-wrap" id="platformToggle">
+    <label>Platform:</label>
+    <button class="toggle-btn active" id="btnAmz" onclick="setPlatform('Amazon')">Amazon</button>
+    <button class="toggle-btn"        id="btnIherb" onclick="setPlatform('iHerb')">iHerb</button>
+  </div>
+</header>
+<div class="gold-line"></div>
+
+<!-- Tab bar -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('tab1')">📊&nbsp; PO Aggregator</button>
+  <button class="tab-btn"        onclick="switchTab('tab2')">📋&nbsp; Combined Reports</button>
+</div>
+
+<!-- ═══════════════════════════════════════════ TAB 1 -->
+<div class="tab-content active" id="tab1">
+
+  <!-- File row -->
+  <div class="file-row">
+    <div class="file-display" id="fileDisplay">No file selected</div>
+    <button class="btn btn-browse" onclick="browseFile()">📂&nbsp; Browse</button>
+    <button class="btn btn-calc"   id="btnCalc" onclick="calculate()">⚡&nbsp; Calculate</button>
+    <button class="btn btn-save"   id="btnSave" onclick="saveExcel()" disabled>💾&nbsp; Save Excel</button>
+  </div>
+  <div class="status" id="status1">Select a file and click Calculate.</div>
+
+  <!-- Cards -->
+  <div class="cards">
+    <div class="card"><div class="card-label">Total SKUs</div><div class="card-value" id="cardSkus">—</div></div>
+    <div class="card"><div class="card-label">Total Cases</div><div class="card-value" id="cardCases">—</div></div>
+    <div class="card"><div class="card-label">Grand Total</div><div class="card-value" id="cardTotal">—</div></div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <table id="resultTable">
+      <thead id="tableHead"></thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ TAB 2 -->
+<div class="tab-content" id="tab2">
+
+  <div style="font-size:0.65rem; color:var(--fg-mid); margin-bottom:12px;">
+    Generate combined reports using your mapping file + PO files.
+  </div>
+
+  <!-- Mapping file (persistent) -->
+  <div class="mapping-row">
+    <span class="mapping-label">📁 Mapping File:</span>
+    <span class="mapping-name" id="mappingName">⚠ Not set — click Change to select</span>
+    <button class="btn btn-change" onclick="changeMapping()">Change</button>
+  </div>
+
+  <!-- Amazon POs -->
+  <div class="section-label">🛒 Amazon PO(s) (.xlsx) — hold Ctrl to select multiple</div>
+  <div class="file-row">
+    <div class="file-display" id="amzDisplay">No files selected</div>
+    <button class="btn btn-browse" onclick="browseAmz()">Browse</button>
+  </div>
+
+  <!-- iHerb POs -->
+  <div class="section-label">🌿 iHerb PO(s) (.csv) — hold Ctrl to select multiple</div>
+  <div class="file-row">
+    <div class="file-display" id="iherbDisplay">No files selected</div>
+    <button class="btn btn-browse" onclick="browseIherb()">Browse</button>
+  </div>
+
+  <!-- Generate buttons -->
+  <div class="btn-row">
+    <button class="btn btn-gen" onclick="genCombined()">&nbsp; Generate Combined Summary</button>
+    <button class="btn btn-big" onclick="genBigTicket()">&nbsp; Generate Big Ticket Breakdown (≥ $2,000)</button>
+  </div>
+
+  <div class="status" id="status2"></div>
+</div>
+
+<!-- Footer -->
+<div class="gold-line"></div>
+<footer>Made by Aryan Bhardwaj for The Tao of Tea</footer>
+
+</body>
+</html>
