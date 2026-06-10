@@ -168,5 +168,29 @@ In `src/index.html`, set `html { font-size: 125%; }` in the CSS. This scales eve
 The mapping file path is saved to `~/.taoftea_po_config.txt` on the user's machine. This persists between sessions so it only needs to be set once.
 
 ---
+## Screenshots
 
-*Last updated: March 2026*
+![Screenshot](Screenshots/Screenshot%202026-03-25%20185431.png)
+
+![Screenshot](Screenshots/Screenshot%202026-03-25%20185511.png)
+
+![Screenshot](Screenshots/Screenshot%202026-03-25%20185547.png)
+
+![Screenshot](Screenshots/Screenshot%202026-03-25%20185625.png)
+
+![Screenshot](Screenshots/Screenshot%202026-03-25%20185656.png)
+
+![Screenshot](Screenshots/Screenshot%202026-03-25%20185723.png)
+
+![Screenshot](Screenshots/Screenshot%202026-03-25%20185826.png)
+
+![Screenshot](Screenshots/Screenshot%202026-03-25%20185859.png)
+
+![Screenshot](Screenshots/Screenshot%202026-03-25%20185920.png)
+
+![Screenshot](Screenshots/Screenshot%202026-03-25%20190019.png)
+
+![Screenshot](Screenshots/Screenshot%202026-03-25%20190116.png)
+
+![Screenshot](Screenshots/Screenshot%202026-03-25%20190228.png)
+*Last updated: June 2026*
